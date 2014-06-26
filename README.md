@@ -32,3 +32,13 @@ Goals
 - Works in both Cloud and non-Cloud instances
 - Be relatively easy to do
 
+Reference Documentation
+-----------------------
+- Debian OpenLDAP HowTo: https://wiki.debian.org/LDAP/OpenLDAPSetup
+- LDAPS Certificate CA Setup: https://help.ubuntu.com/10.04/serverguide/certificates-and-security.html
+
+Notes
+-----
+
+If you use a self-signed certificate for the LDAPS (LDAP+SSL) then you will need to ensure each server has your CA's cacert.pem file
+so that the cert can be authenticated.
