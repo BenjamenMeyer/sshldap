@@ -91,19 +91,36 @@ function get_ldap_admin()
 # Tell user how to configure a portion of the LDAP Configuration to enable LDAPS how they want
 function warn_user_config_update_ldaps()
     {
-    if [ -f /etc/debian_version]; then
-        echo
-        echo WARNING: You must enable LDAPS in the /etc/default/slapd file.
-        echo    To do so, change the SLAPD_SERVICES to specify LDAPS.
-        echo    For example:
-        echo
-        echo        SLAPD_SERVICES="ldap:/// ldapi:///"
-        echo
-        echo    becomes:
-        echo
-        echo        SLAPD_SERVICES="ldap://127.0.0.1:389/ ldaps:/// ldapi:///"
-        echo
-        echo    with non-TLS LDAP remaining available on the local-host
+    echo
+    echo "WARNING: Remote hosts will only be able to access the LDAP Server via LDAPS if"
+    echo "   the LDAPS port is visible through the firewall."
+    echo
+    for ENTRY in `grep ldaps /etc/services`
+    do
+        echo "  ${ENTRY}"
+    done
+    echo
+    echo "  If using the UFW Firewall Solution, then you can do the following to enable LDAPS:"
+    echo
+    echo "  $ sudo ufw allow ldaps"
+    echo
+    echo "  Note: You may need to modify /etc/ufw/applications.d/ufw-directoryserver to differentiate"
+    echo "      between LDAP and LDAPS"
+    echo
+    }
+
+# Update Distro Specific LDAP Configuration Data
+function update_distro_server_configuration()
+    {
+    if [ -f /etc/debian_version ]; then
+
+        local DEBIAN_LDAP_CONFIG_FILE="/etc/default/slapd"
+
+        echo "Updating ${DEBIAN_LDAP_CONFIG_FILE} to:"
+        echo "  Keep LDAPI on localhost"
+        echo "  Keep IPC LDP"
+        echo "  Add LDAPS for everything else"
+        sed -i "s/SLAPD_SERVICES=\"ldap:\/\/\/ ldapi:\/\/\/\"/SLAPD_SERVICES=\"ldap:\/\/127.0.0.1:389\/ ldaps:\/\/\/ ldapi:\/\/\/\"/" "${DEBIAN_LDAP_CONFIG_FILE}"
         echo
     fi
     }
@@ -417,6 +434,8 @@ olcTLSVerifyClient: never
 
             ${LDAP_MODIFY} -Y EXTERNAL -H ldapi:/// -f "${LDAPS_LDIF}"
             local -i result=$?
+
+            update_distro_server_configuration
 
             warn_user_config_update_ldaps
 
